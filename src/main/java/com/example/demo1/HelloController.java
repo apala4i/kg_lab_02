@@ -119,14 +119,14 @@ public class HelloController{
         gc.moveTo(100, 200);
         gc.lineTo(200, 100);
         gc.moveTo(220, 100);
-        gc.lineTo(270, 150);
-        gc.lineTo(300, 100);
-        gc.moveTo(270, 150);
-        gc.lineTo(220, 200);
-        gc.moveTo(290, 100);
-        gc.lineTo(290, 200);
-        gc.lineTo(390, 100);
-        gc.lineTo(390, 200);
+//        gc.lineTo(270, 150);
+//        gc.lineTo(300, 100);
+//        gc.moveTo(270, 150);
+//        gc.lineTo(220, 200);
+//        gc.moveTo(290, 100);
+//        gc.lineTo(290, 200);
+//        gc.lineTo(390, 100);
+//        gc.lineTo(390, 200);
 
         gc.stroke();
     }
