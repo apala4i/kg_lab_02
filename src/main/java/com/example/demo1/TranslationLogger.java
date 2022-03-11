@@ -3,27 +3,35 @@ package com.example.demo1;
 import javafx.geometry.Point2D;
 import javafx.scene.control.TextArea;
 
+import java.util.Stack;
+
 public class TranslationLogger
 {
-    public static void transformLogger(TextArea aTextArea, Point2D move)
+    Stack<TransformInfo> TransformHistory = new Stack<>();
+
+    public void transformLogger(TextArea aTextArea, Point2D move)
     {
         String addText = String.format("Фигура перемещена на (%.2f, %.2f)\n",
                                         move.getX(), move.getY());
         aTextArea.setText(aTextArea.getText() + addText);
+        TransformHistory.add(new TransformInfo(TransformType.Move, move));
+
     }
 
-    public static void rotateLogger(TextArea aTextArea, double angle)
+    public void rotateLogger(TextArea aTextArea, double angle)
     {
         aTextArea.setText(aTextArea.getText() + String.format("Фигура повернута на %.2f градуоов\n", angle));
+        TransformHistory.add(new TransformInfo(TransformType.Rotate, new Point2D(angle, angle)));
     }
 
-    public static void scaleLogger(TextArea aTextArea, Point2D scale)
+    public void scaleLogger(TextArea aTextArea, Point2D scale)
     {
         aTextArea.setText(aTextArea.getText() + String.format("Фигура растянута с коэффицентами (%.2f, %.2f)\n",
                                                               scale.getX(), scale.getY()));
+        TransformHistory.add(new TransformInfo(TransformType.Scale, scale));
     }
 
-    public static void removeLastTranslation(TextArea aTextArea)
+    public TransformInfo removeLastTranslation(TextArea aTextArea)
     {
         String currentText = aTextArea.getText();
         if (currentText.length() != 0)
@@ -37,6 +45,14 @@ public class TranslationLogger
             {
                 aTextArea.setText("");
             }
+        }
+        if (TransformHistory.empty())
+        {
+            return new TransformInfo(TransformType.UNKNOWN, new Point2D(0, 0));
+        }
+        else
+        {
+            return TransformHistory.pop();
         }
     }
 

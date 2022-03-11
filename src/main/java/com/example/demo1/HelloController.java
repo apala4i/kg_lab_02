@@ -5,13 +5,11 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
+import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
 import javafx.scene.transform.*;
 
 import java.net.URL;
@@ -25,7 +23,10 @@ public class HelloController{
     private TextField moveX;
 
     @FXML
-    private TextField scaleValue;
+    private TextField scaleValueX;
+
+    @FXML
+    private TextField scaleValueY;
 
     @FXML
     private TextField centerX;
@@ -48,6 +49,12 @@ public class HelloController{
     private TextArea translationLogger;
 
     Point2D centerShift = new Point2D(0, 0);
+
+    Double angle = 0.;
+
+    Point2D scale = new Point2D(1, 1);
+
+    TranslationLogger aTranslationLogger = new TranslationLogger();
 
 
     @FXML
@@ -73,6 +80,10 @@ public class HelloController{
         {
             showAlertWithMSG("Некорректно задан центр");
         }
+        catch (Exception e)
+        {
+            showAlertWithMSG("что-то пошлшо не так");
+        }
     }
 
     private void drawCenter()
@@ -94,7 +105,7 @@ public class HelloController{
         final double pointHeight = 5;
         final double pointWidth = 5;
         var g = aCanvasForCenter.getGraphicsContext2D();
-        g.fillOval(x - pointWidth*2, y - pointHeight*2, pointWidth, pointHeight);
+        g.fillOval(x - pointHeight / 2 , y - pointHeight / 2, pointWidth, pointHeight);
         g.fillText(Double.valueOf(x).toString() + " " + Double.valueOf(y).toString(), x - 40, y - pointWidth*3);
         g.stroke();
     }
@@ -148,15 +159,28 @@ public class HelloController{
                 throw new NullPointerException();
             }
 
-            double doubleMoveX = Double.parseDouble(moveX.getText());
-            double doubleMoveY = Double.parseDouble(moveY.getText());
-            var moveMatrix = Affine.translate(doubleMoveX, doubleMoveY);
+
+            double doubleMoveX = Double.parseDouble(moveX.getText()) / scale.getX();
+            double doubleMoveY = Double.parseDouble(moveY.getText()) / scale.getY();
+            double newX = doubleMoveX * Math.cos(Math.toRadians(-angle)) - doubleMoveY * Math.sin(Math.toRadians(-angle));
+            double newY = doubleMoveX * Math.sin(Math.toRadians(-angle)) + doubleMoveY * Math.cos(Math.toRadians(-angle));
+
+            Translate moveMatrix;
+
+            if (angle != 0)
+            {
+                moveMatrix = Affine.translate(newX, newY);
+            }
+            else
+            {
+                moveMatrix = Affine.translate(doubleMoveX, doubleMoveY);
+            }
+
             var transforms = aCanvas.getTransforms();
             transforms.add(moveMatrix);
-
             centerShift = centerShift.add(-doubleMoveX, -doubleMoveY);
 
-            TranslationLogger.transformLogger(translationLogger, new Point2D(doubleMoveX, doubleMoveY));
+            aTranslationLogger.transformLogger(translationLogger, new Point2D(doubleMoveX, doubleMoveY));
         }
         catch (NumberFormatException e)
         {
@@ -174,19 +198,22 @@ public class HelloController{
     {
         try
         {
-            if (scaleValue.getText().length() == 0 ||
+            if (scaleValueX.getText().length() == 0 ||
+                scaleValueY.getText().length() == 0 ||
                 centerX.getText().length() == 0 ||
                 centerY.getText().length() == 0)
             {
                 throw new NullPointerException();
             }
             var center = getCenter();
-            double doubleScaleValue = Double.parseDouble(scaleValue.getText());
-            var scaleMatrix = Affine.scale(doubleScaleValue, doubleScaleValue, center.getX(), center.getY());
+            double doubleScaleValueX = Double.parseDouble(scaleValueX.getText());
+            double doubleScaleValueY = Double.parseDouble(scaleValueY.getText());
+            var scaleMatrix = Affine.scale(doubleScaleValueX, doubleScaleValueY, center.getX(), center.getY());
             var transforms = aCanvas.getTransforms();
             transforms.add(scaleMatrix);
 
-            TranslationLogger.scaleLogger(translationLogger, new Point2D(doubleScaleValue, doubleScaleValue));
+            aTranslationLogger.scaleLogger(translationLogger, new Point2D(doubleScaleValueX, doubleScaleValueY));
+            scale = new Point2D(scale.getX()*doubleScaleValueX, scale.getY()*doubleScaleValueY);
         }
         catch (NumberFormatException e)
         {
@@ -196,6 +223,7 @@ public class HelloController{
         {
             showAlertWithMSG("Вы не ввели одно из значений, попробуйте еще раз!");
         }
+
     }
 
     @FXML
@@ -218,7 +246,8 @@ public class HelloController{
             var transforms = aCanvas.getTransforms();
             transforms.add(rotateMatrix);
 
-            TranslationLogger.rotateLogger(translationLogger, doubleRotateValue);
+            aTranslationLogger.rotateLogger(translationLogger, doubleRotateValue);
+            angle += doubleRotateValue;
 
         }
         catch (NumberFormatException e)
@@ -243,15 +272,24 @@ public class HelloController{
         {
             var transforms = aCanvas.getTransforms();
 
-
-            if (isTransformMatrix(transforms.get(transforms.size() - 1)))
+            TransformInfo lastTransformInfo = aTranslationLogger.removeLastTranslation(translationLogger);
+            switch (lastTransformInfo.aTransformType)
             {
-                centerShift = centerShift.add(transforms.get(transforms.size() - 1).getTx(),
-                        transforms.get(transforms.size() - 1).getTy());
+                case Move:
+                    centerShift = centerShift.add(transforms.get(transforms.size() - 1).getTx(),
+                            transforms.get(transforms.size() - 1).getTy());
+                    break;
+                case Scale:
+                    this.scale = new Point2D(scale.getX() / lastTransformInfo.transformValue.getX(),
+                                         scale.getY() / lastTransformInfo.transformValue.getY());
+                    break;
+                case Rotate:
+                    this.angle -= lastTransformInfo.transformValue.getX();
+                    break;
+                default:
+                    ;
             }
-
             transforms.remove(aCanvas.getTransforms().size() - 1);
-            TranslationLogger.removeLastTranslation(translationLogger);
         }
     }
 
