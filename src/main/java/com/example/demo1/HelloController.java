@@ -126,18 +126,19 @@ public class HelloController{
         var gc = aCanvas.getGraphicsContext2D();
         gc.beginPath();
         gc.moveTo(100, 100);
-        gc.lineTo(200, 200);
-        gc.moveTo(100, 200);
         gc.lineTo(200, 100);
-        gc.moveTo(220, 100);
-//        gc.lineTo(270, 150);
-//        gc.lineTo(300, 100);
-//        gc.moveTo(270, 150);
-//        gc.lineTo(220, 200);
-//        gc.moveTo(290, 100);
-//        gc.lineTo(290, 200);
-//        gc.lineTo(390, 100);
-//        gc.lineTo(390, 200);
+        gc.lineTo(200, 200);
+        gc.lineTo(100, 200);
+        gc.lineTo(100, 100);
+        gc.moveTo(150, 100);
+        gc.lineTo(200, 200);
+        gc.moveTo(150, 100);
+        gc.lineTo(100, 200);
+        gc.quadraticCurveTo(150, 180, 200, 200);
+        gc.moveTo(150, 100);
+        gc.quadraticCurveTo(150, 150, 100, 200);
+        gc.moveTo(150, 100);
+        gc.quadraticCurveTo(150, 150, 200, 200);
 
         gc.stroke();
     }
